@@ -220,7 +220,7 @@ public class CameraActivity extends Activity implements Camera.PictureCallback {
 	@Override
 	public void onPictureTaken(byte[] paramArrayOfByte, Camera paramCamera) {
 		try {
-			String fln = String.format(directory.getPath() + "/f%d.jpg",
+			String fln = String.format(directory.getPath() + "/p%d.jpg",
 					System.currentTimeMillis());
 			FileOutputStream os = new FileOutputStream(fln);
 			os.write(paramArrayOfByte);

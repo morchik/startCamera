@@ -13,8 +13,7 @@
         android:id="@+id/surfaceView"
         android:layout_width="1px"
         android:layout_height="1px"
-        android:onClick="onClick"
-        android:layout_gravity="center" >
+        android:onClick="onClick" >
     </SurfaceView>
 
     <Button
@@ -24,6 +23,6 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:onClick="onClick"
-        android:text="" />
+        android:text="ok" />
 
 </RelativeLayout>
