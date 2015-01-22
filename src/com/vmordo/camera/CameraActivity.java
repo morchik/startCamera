@@ -6,6 +6,8 @@ import android.util.Log;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.List;
+
 import android.app.Activity;
 import android.graphics.Matrix;
 import android.graphics.RectF;
@@ -65,7 +67,39 @@ public class CameraActivity extends Activity implements Camera.PictureCallback {
 		camera = null;
 	}
 
+	public void setPic() {
+		Camera.Parameters param;
+		param = camera.getParameters();
+
+		Camera.Size bestSize = null;
+		List<Camera.Size> sizeList = camera.getParameters()	.getSupportedPictureSizes();
+		bestSize = sizeList.get(0);
+		for (int i = 1; i < sizeList.size(); i++) {
+			if ((sizeList.get(i).width * sizeList.get(i).height) > (bestSize.width * bestSize.height)) {
+				bestSize = sizeList.get(i);
+			}
+		}
+		/*
+		List<Integer> supportedPreviewFormats = param
+				.getSupportedPreviewFormats();
+		Iterator<Integer> supportedPreviewFormatsIterator = supportedPreviewFormats
+				.iterator();
+		while (supportedPreviewFormatsIterator.hasNext()) {
+			Integer previewFormat = supportedPreviewFormatsIterator.next();
+			if (previewFormat == ImageFormat.YV12) {
+				param.setPreviewFormat(previewFormat);
+			}
+		}
+
+		param.setPreviewSize(bestSize.width, bestSize.height);
+		*/
+		param.setPictureSize(bestSize.width, bestSize.height);
+
+		camera.setParameters(param);
+	}
+
 	public void onClick(View v) {
+		setPic();
 		camera.takePicture(null, null, this);
 	}
 
@@ -186,12 +220,13 @@ public class CameraActivity extends Activity implements Camera.PictureCallback {
 	@Override
 	public void onPictureTaken(byte[] paramArrayOfByte, Camera paramCamera) {
 		try {
-			FileOutputStream os = new FileOutputStream(String.format(
-					directory.getPath()+"/%d.jpg", System.currentTimeMillis()));
+			String fln = String.format(directory.getPath() + "/f%d.jpg",
+					System.currentTimeMillis());
+			FileOutputStream os = new FileOutputStream(fln);
 			os.write(paramArrayOfByte);
 			os.close();
-			Toast.makeText(this, " " + os.toString(), Toast.LENGTH_SHORT)
-					.show();
+			Toast.makeText(this, paramArrayOfByte.length + " " + fln,
+					Toast.LENGTH_LONG).show();
 		} catch (Exception e) {
 			Log.e("onPictureTaken", e.getMessage());
 			Toast.makeText(this, "Error " + e.getMessage(), Toast.LENGTH_LONG)
