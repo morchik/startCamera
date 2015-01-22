@@ -15,8 +15,10 @@ import android.view.Display;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 @SuppressWarnings("deprecation")
 public class CameraActivity extends Activity {
@@ -58,6 +60,11 @@ public class CameraActivity extends Activity {
 		if (camera != null)
 			camera.release();
 		camera = null;
+	}
+
+	public void onClick(View v) {
+		camera.takePicture(null, null, null);
+		Toast.makeText(this, ""+camera, Toast.LENGTH_LONG).show();
 	}
 
 	class HolderCallback implements SurfaceHolder.Callback {
