@@ -6,14 +6,24 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.vmordo.camera.CameraActivity" >
-
+    tools:context="com.vmordo.camera.CameraActivity" 
+	android:onClick="onClick">
+	
     <SurfaceView
         android:id="@+id/surfaceView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="1px"
+        android:layout_height="1px"
         android:onClick="onClick"
         android:layout_gravity="center" >
     </SurfaceView>
+
+    <Button
+        android:id="@+id/button1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:onClick="onClick"
+        android:text="" />
 
 </RelativeLayout>
