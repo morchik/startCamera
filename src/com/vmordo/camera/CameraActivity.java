@@ -1,10 +1,11 @@
 package com.vmordo.camera;
 
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.os.Environment;
+import android.util.Log;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-
 import android.app.Activity;
 import android.graphics.Matrix;
 import android.graphics.RectF;
@@ -21,8 +22,9 @@ import android.view.WindowManager;
 import android.widget.Toast;
 
 @SuppressWarnings("deprecation")
-public class CameraActivity extends Activity {
+public class CameraActivity extends Activity implements Camera.PictureCallback {
 
+	File directory;
 	SurfaceView sv;
 	SurfaceHolder holder;
 	HolderCallback holderCallback;
@@ -45,6 +47,7 @@ public class CameraActivity extends Activity {
 
 		holderCallback = new HolderCallback();
 		holder.addCallback(holderCallback);
+		createDirectory();
 	}
 
 	@Override
@@ -63,8 +66,7 @@ public class CameraActivity extends Activity {
 	}
 
 	public void onClick(View v) {
-		camera.takePicture(null, null, null);
-		Toast.makeText(this, ""+camera, Toast.LENGTH_LONG).show();
+		camera.takePicture(null, null, this);
 	}
 
 	class HolderCallback implements SurfaceHolder.Callback {
@@ -180,4 +182,31 @@ public class CameraActivity extends Activity {
 		result = result % 360;
 		camera.setDisplayOrientation(result);
 	}
+
+	@Override
+	public void onPictureTaken(byte[] paramArrayOfByte, Camera paramCamera) {
+		try {
+			FileOutputStream os = new FileOutputStream(String.format(
+					directory.getPath()+"/%d.jpg", System.currentTimeMillis()));
+			os.write(paramArrayOfByte);
+			os.close();
+			Toast.makeText(this, " " + os.toString(), Toast.LENGTH_SHORT)
+					.show();
+		} catch (Exception e) {
+			Log.e("onPictureTaken", e.getMessage());
+			Toast.makeText(this, "Error " + e.getMessage(), Toast.LENGTH_LONG)
+					.show();
+		}
+		paramCamera.startPreview();
+	}
+
+	private void createDirectory() {
+		directory = new File(
+				Environment
+						.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+				"MyFolder");
+		if (!directory.exists())
+			directory.mkdirs();
+	}
+
 }
