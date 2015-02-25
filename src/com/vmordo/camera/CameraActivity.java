@@ -13,6 +13,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.PixelFormat;
 import android.graphics.RectF;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
@@ -45,23 +46,27 @@ public class CameraActivity extends Activity implements Camera.PictureCallback {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		paint = new Paint();
-		paint.setTextSize(24);
-		paint.setColor(Color.RED);
+		paint.setTextSize(32);
+		paint.setColor(Color.BLUE);
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-				WindowManager.LayoutParams.FLAG_FULLSCREEN);
-		sv2 = new DrawView(this);
+		WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		setContentView(R.layout.activity_camera);
+
+		sv2 = new DrawView(this);
 		LinearLayout ll = (LinearLayout) findViewById(R.id.linearLayout1);
-		LinearLayout.LayoutParams params2 = new LinearLayout.LayoutParams(
-				LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-		sv2.setLayoutParams(params2);
+		LinearLayout.LayoutParams labelLayoutParams = new LinearLayout.LayoutParams(
+				LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
+	    sv2.setLayoutParams(labelLayoutParams);
 		ll.addView(sv2);
+
+		Log.e("CameraActivity", sv2 + "getHeight=" + sv2.getHeight());
+		Log.e("CameraActivity", "getWidth=" + sv2.getWidth());
 		sv = (SurfaceView) findViewById(R.id.surfaceView);
 		holder = sv.getHolder();
-		holder.setType(SurfaceHolder.SURFACE_TYPE_HARDWARE);// .SURFACE_TYPE_PUSH_BUFFERS);
-
+		holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+		
 		holderCallback = new HolderCallback();
 		holder.addCallback(holderCallback);
 		createDirectory();
@@ -263,17 +268,30 @@ public class CameraActivity extends Activity implements Camera.PictureCallback {
 
 		public DrawView(Context context) {
 			super(context);
-			getHolder().addCallback(this);
-		}
+			this.setBackgroundColor(Color.TRANSPARENT);
+			this.setZOrderOnTop(true); //necessary                
+		    getHolder().setFormat(PixelFormat.TRANSPARENT); 
 
+		    getHolder().addCallback(this);
+			getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+		}
+/*
+		@Override
+		protected void onDraw(Canvas canvas) {
+			Log.e("CameraActivity", "onDraw(Canvas canvas)=" + canvas);
+			super.onDraw(canvas);
+			canvas.drawCircle(50, 60, 3, paint);
+		}
+*/
 		@Override
 		public void surfaceChanged(SurfaceHolder holder, int format, int width,
 				int height) {
-
+			Log.e("DrawView", "surfaceChanged "+cnt);
 		}
 
 		@Override
 		public void surfaceCreated(SurfaceHolder holder) {
+			Log.e("DrawView", "surfaceCreated "+cnt);
 			drawThread = new DrawThread(getHolder());
 			drawThread.setRunning(true);
 			drawThread.start();
@@ -281,6 +299,7 @@ public class CameraActivity extends Activity implements Camera.PictureCallback {
 
 		@Override
 		public void surfaceDestroyed(SurfaceHolder holder) {
+			Log.e("DrawView", drawThread+" surfaceDestroyed "+cnt);
 			boolean retry = true;
 			drawThread.setRunning(false);
 			while (retry) {
@@ -312,16 +331,30 @@ public class CameraActivity extends Activity implements Camera.PictureCallback {
 					try {
 						canvas = surfaceHolderT.lockCanvas(null);
 						if (canvas == null) {
-							// sv.set
 							continue;
 						}
-						canvas.drawARGB(50, 12, 102, 12);
-						canvas.drawText("*" + cnt, 10, 10, paint);
+						//canvas.drawColor(Color.argb(0, 255, 255, 255));
+						//canvas.
+						paint.setColor(Color.RED);
+						canvas.drawText("*" + cnt, 70, 70, paint);
+						paint.setColor(Color.BLUE);
+						canvas.drawCircle(sv.getWidth(), sv2.getHeight(), 10, paint);
 						++cnt;
-						Log.v("DrawView", "cnt=" + cnt);
+						if (cnt % 100 == 0) {
+							Log.e("DrawView", this+" cnt=" + cnt);
+							Log.e("CameraActivity",
+									surfaceHolderT + "  getHeight=" + sv2.getHeight());
+							Log.e("CameraActivity",
+									canvas + " getWidth=" + sv2.getWidth());
+							Log.e("CameraActivity",
+									holder + " holder=" + cnt);
+						}
 					} finally {
 						if (canvas != null) {
 							surfaceHolderT.unlockCanvasAndPost(canvas);
+							if (cnt % 200 == 0)
+								Log.v("DrawView", "unlockCanvasAndPost cnt ="
+										+ cnt);
 						}
 					}
 				}
