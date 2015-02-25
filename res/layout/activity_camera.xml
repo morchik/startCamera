@@ -13,9 +13,7 @@
         android:id="@+id/surfaceView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_alignParentTop="true"
-        android:background="#80808080"
-        android:onClick="onClick" >
+        android:layout_alignParentTop="true" >
     </SurfaceView>
 
     <LinearLayout
@@ -25,8 +23,6 @@
         android:layout_alignParentTop="true"
         android:background="#00FFFFFF"
         android:orientation="horizontal" >
-
-
     </LinearLayout>
 
 </RelativeLayout>

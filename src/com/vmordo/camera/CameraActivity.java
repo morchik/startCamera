@@ -7,6 +7,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
+
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -14,16 +16,18 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
+import android.graphics.Point;
 import android.graphics.RectF;
+import android.graphics.PorterDuff;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Size;
 import android.view.Display;
+import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
-import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
@@ -33,7 +37,8 @@ import android.widget.Toast;
 public class CameraActivity extends Activity implements Camera.PictureCallback {
 	public static long cnt = 0;
 	Paint paint;
-
+	Point pnt;
+	
 	File directory;
 	SurfaceView sv, sv2;
 	SurfaceHolder holder;
@@ -46,6 +51,7 @@ public class CameraActivity extends Activity implements Camera.PictureCallback {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		paint = new Paint();
+		pnt = new Point();
 		paint.setTextSize(32);
 		paint.setColor(Color.BLUE);
 		super.onCreate(savedInstanceState);
@@ -61,8 +67,6 @@ public class CameraActivity extends Activity implements Camera.PictureCallback {
 	    sv2.setLayoutParams(labelLayoutParams);
 		ll.addView(sv2);
 
-		Log.e("CameraActivity", sv2 + "getHeight=" + sv2.getHeight());
-		Log.e("CameraActivity", "getWidth=" + sv2.getWidth());
 		sv = (SurfaceView) findViewById(R.id.surfaceView);
 		holder = sv.getHolder();
 		holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
@@ -268,12 +272,20 @@ public class CameraActivity extends Activity implements Camera.PictureCallback {
 
 		public DrawView(Context context) {
 			super(context);
-			this.setBackgroundColor(Color.TRANSPARENT);
+			this.setBackgroundColor(Color.TRANSPARENT); //TRANSLUCENT
 			this.setZOrderOnTop(true); //necessary                
-		    getHolder().setFormat(PixelFormat.TRANSPARENT); 
 
 		    getHolder().addCallback(this);
-			getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+		    getHolder().setFormat(PixelFormat.TRANSPARENT); 
+
+		    getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+		}
+		
+		@SuppressLint("ClickableViewAccessibility") @Override
+		public boolean onTouchEvent(MotionEvent event) {
+			pnt.x = (int) event.getX();
+			pnt.y = (int) event.getY();
+			return true;
 		}
 /*
 		@Override
@@ -334,21 +346,13 @@ public class CameraActivity extends Activity implements Camera.PictureCallback {
 							continue;
 						}
 						//canvas.drawColor(Color.argb(0, 255, 255, 255));
-						//canvas.
+						canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 						paint.setColor(Color.RED);
 						canvas.drawText("*" + cnt, 70, 70, paint);
+						canvas.drawCircle(pnt.x, pnt.y, 3, paint);
 						paint.setColor(Color.BLUE);
 						canvas.drawCircle(sv.getWidth(), sv2.getHeight(), 10, paint);
 						++cnt;
-						if (cnt % 100 == 0) {
-							Log.e("DrawView", this+" cnt=" + cnt);
-							Log.e("CameraActivity",
-									surfaceHolderT + "  getHeight=" + sv2.getHeight());
-							Log.e("CameraActivity",
-									canvas + " getWidth=" + sv2.getWidth());
-							Log.e("CameraActivity",
-									holder + " holder=" + cnt);
-						}
 					} finally {
 						if (canvas != null) {
 							surfaceHolderT.unlockCanvasAndPost(canvas);
