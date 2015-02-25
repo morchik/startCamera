@@ -1,13 +1,13 @@
 package com.vmordo.camera;
 
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Log;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
-
+import java.util.Timer;
+import java.util.TimerTask;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -38,7 +38,7 @@ public class CameraActivity extends Activity implements Camera.PictureCallback {
 	public static long cnt = 0;
 	Paint paint;
 	Point pnt;
-	
+
 	File directory;
 	SurfaceView sv, sv2;
 	SurfaceHolder holder;
@@ -50,6 +50,7 @@ public class CameraActivity extends Activity implements Camera.PictureCallback {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		Cnt.set(getApplicationContext());
 		paint = new Paint();
 		pnt = new Point();
 		paint.setTextSize(32);
@@ -57,23 +58,24 @@ public class CameraActivity extends Activity implements Camera.PictureCallback {
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-		WindowManager.LayoutParams.FLAG_FULLSCREEN);
+				WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		setContentView(R.layout.activity_camera);
 
 		sv2 = new DrawView(this);
 		LinearLayout ll = (LinearLayout) findViewById(R.id.linearLayout1);
 		LinearLayout.LayoutParams labelLayoutParams = new LinearLayout.LayoutParams(
-				LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
-	    sv2.setLayoutParams(labelLayoutParams);
+				LinearLayout.LayoutParams.MATCH_PARENT,
+				LinearLayout.LayoutParams.MATCH_PARENT);
+		sv2.setLayoutParams(labelLayoutParams);
 		ll.addView(sv2);
 
 		sv = (SurfaceView) findViewById(R.id.surfaceView);
 		holder = sv.getHolder();
 		holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-		
+
 		holderCallback = new HolderCallback();
 		holder.addCallback(holderCallback);
-		createDirectory();
+		someTask(1);
 	}
 
 	@Override
@@ -89,6 +91,22 @@ public class CameraActivity extends Activity implements Camera.PictureCallback {
 		if (camera != null)
 			camera.release();
 		camera = null;
+	}
+
+	void someTask(long everySec) {
+		Timer myTimer = new Timer(); // Создаем таймер
+		Log.v("someTask", " someTask " + everySec);
+		myTimer.schedule(new TimerTask() { // Определяем задачу
+					@Override
+					public void run() {
+						try {
+							onClick(null);
+						} catch (Exception e) {
+							Log.e("Error", e.toString());
+							//Toast.makeText(Cnt.get(), e.toString(),	Toast.LENGTH_SHORT).show();
+						}
+					}
+				}, everySec * 10000L, everySec * 1000L); // интервал
 	}
 
 	public void setPic() {
@@ -121,6 +139,7 @@ public class CameraActivity extends Activity implements Camera.PictureCallback {
 	}
 
 	public void onClick(View v) {
+		//Log.v("onClick", " onClick " + v);
 		setPic();
 		camera.takePicture(null, null, this);
 	}
@@ -242,28 +261,17 @@ public class CameraActivity extends Activity implements Camera.PictureCallback {
 	@Override
 	public void onPictureTaken(byte[] paramArrayOfByte, Camera paramCamera) {
 		try {
-			String fln = String.format(directory.getPath() + "/p%d.jpg",
-					System.currentTimeMillis());
+			String fln = Cnt.getFileName().toString();
 			FileOutputStream os = new FileOutputStream(fln);
 			os.write(paramArrayOfByte);
 			os.close();
-			Toast.makeText(this, paramArrayOfByte.length + " " + fln,
-					Toast.LENGTH_LONG).show();
+			Log.v("photo", paramArrayOfByte.length + " " + fln);
 		} catch (Exception e) {
 			Log.e("onPictureTaken", e.getMessage());
-			Toast.makeText(this, "Error " + e.getMessage(), Toast.LENGTH_LONG)
+			Toast.makeText(this, "Error " + e.getMessage(), Toast.LENGTH_SHORT)
 					.show();
 		}
 		paramCamera.startPreview();
-	}
-
-	private void createDirectory() {
-		directory = new File(
-				Environment
-						.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-				"MyFolder");
-		if (!directory.exists())
-			directory.mkdirs();
 	}
 
 	class DrawView extends SurfaceView implements SurfaceHolder.Callback {
@@ -272,38 +280,37 @@ public class CameraActivity extends Activity implements Camera.PictureCallback {
 
 		public DrawView(Context context) {
 			super(context);
-			this.setBackgroundColor(Color.TRANSPARENT); //TRANSLUCENT
-			this.setZOrderOnTop(true); //necessary                
+			this.setBackgroundColor(Color.TRANSPARENT); // TRANSLUCENT
+			this.setZOrderOnTop(true); // necessary
 
-		    getHolder().addCallback(this);
-		    getHolder().setFormat(PixelFormat.TRANSPARENT); 
+			getHolder().addCallback(this);
+			getHolder().setFormat(PixelFormat.TRANSPARENT);
 
-		    getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+			getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 		}
-		
-		@SuppressLint("ClickableViewAccessibility") @Override
+
+		@SuppressLint("ClickableViewAccessibility")
+		@Override
 		public boolean onTouchEvent(MotionEvent event) {
 			pnt.x = (int) event.getX();
 			pnt.y = (int) event.getY();
 			return true;
 		}
-/*
-		@Override
-		protected void onDraw(Canvas canvas) {
-			Log.e("CameraActivity", "onDraw(Canvas canvas)=" + canvas);
-			super.onDraw(canvas);
-			canvas.drawCircle(50, 60, 3, paint);
-		}
-*/
+
+		/*
+		 * @Override protected void onDraw(Canvas canvas) {
+		 * Log.e("CameraActivity", "onDraw(Canvas canvas)=" + canvas);
+		 * super.onDraw(canvas); canvas.drawCircle(50, 60, 3, paint); }
+		 */
 		@Override
 		public void surfaceChanged(SurfaceHolder holder, int format, int width,
 				int height) {
-			Log.e("DrawView", "surfaceChanged "+cnt);
+			Log.e("DrawView", "surfaceChanged " + cnt);
 		}
 
 		@Override
 		public void surfaceCreated(SurfaceHolder holder) {
-			Log.e("DrawView", "surfaceCreated "+cnt);
+			Log.e("DrawView", "surfaceCreated " + cnt);
 			drawThread = new DrawThread(getHolder());
 			drawThread.setRunning(true);
 			drawThread.start();
@@ -311,7 +318,7 @@ public class CameraActivity extends Activity implements Camera.PictureCallback {
 
 		@Override
 		public void surfaceDestroyed(SurfaceHolder holder) {
-			Log.e("DrawView", drawThread+" surfaceDestroyed "+cnt);
+			Log.e("DrawView", drawThread + " surfaceDestroyed " + cnt);
 			boolean retry = true;
 			drawThread.setRunning(false);
 			while (retry) {
@@ -345,13 +352,15 @@ public class CameraActivity extends Activity implements Camera.PictureCallback {
 						if (canvas == null) {
 							continue;
 						}
-						//canvas.drawColor(Color.argb(0, 255, 255, 255));
-						canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+						// canvas.drawColor(Color.argb(0, 255, 255, 255));
+						canvas.drawColor(Color.TRANSPARENT,
+								PorterDuff.Mode.CLEAR);
 						paint.setColor(Color.RED);
 						canvas.drawText("*" + cnt, 70, 70, paint);
 						canvas.drawCircle(pnt.x, pnt.y, 3, paint);
 						paint.setColor(Color.BLUE);
-						canvas.drawCircle(sv.getWidth(), sv2.getHeight(), 10, paint);
+						canvas.drawCircle(sv.getWidth(), sv2.getHeight(), 10,
+								paint);
 						++cnt;
 					} finally {
 						if (canvas != null) {
