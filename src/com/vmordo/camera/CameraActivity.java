@@ -7,9 +7,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
-
 import android.app.Activity;
+import android.content.Context;
+import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.RectF;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
@@ -25,6 +27,8 @@ import android.widget.Toast;
 
 @SuppressWarnings("deprecation")
 public class CameraActivity extends Activity implements Camera.PictureCallback {
+	public static long cnt = 0;
+	Paint paint;
 
 	File directory;
 	SurfaceView sv;
@@ -37,15 +41,17 @@ public class CameraActivity extends Activity implements Camera.PictureCallback {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		paint = new Paint();
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 				WindowManager.LayoutParams.FLAG_FULLSCREEN);
-		setContentView(R.layout.activity_camera);
+		sv = new DrawView(this);
+		setContentView(sv);
 
-		sv = (SurfaceView) findViewById(R.id.surfaceView);
+		//sv = (SurfaceView) findViewById(R.id.surfaceView);
 		holder = sv.getHolder();
-		holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+		holder.setType(SurfaceHolder.SURFACE_TYPE_HARDWARE);//.SURFACE_TYPE_PUSH_BUFFERS);
 
 		holderCallback = new HolderCallback();
 		holder.addCallback(holderCallback);
@@ -130,7 +136,7 @@ public class CameraActivity extends Activity implements Camera.PictureCallback {
 
 		@Override
 		public void surfaceDestroyed(SurfaceHolder holder) {
-
+			
 		}
 
 	}
@@ -242,6 +248,77 @@ public class CameraActivity extends Activity implements Camera.PictureCallback {
 				"MyFolder");
 		if (!directory.exists())
 			directory.mkdirs();
+	}
+
+	class DrawView extends SurfaceView implements SurfaceHolder.Callback {
+
+		private DrawThread drawThread;
+
+		public DrawView(Context context) {
+			super(context);
+			getHolder().addCallback(this);
+		}
+
+		@Override
+		public void surfaceChanged(SurfaceHolder holder, int format, int width,
+				int height) {
+
+		}
+
+		@Override
+		public void surfaceCreated(SurfaceHolder holder) {
+			drawThread = new DrawThread(getHolder());
+			drawThread.setRunning(true);
+			drawThread.start();
+		}
+
+		@Override
+		public void surfaceDestroyed(SurfaceHolder holder) {
+			boolean retry = true;
+			drawThread.setRunning(false);
+			while (retry) {
+				try {
+					drawThread.join();
+					retry = false;
+				} catch (InterruptedException e) {
+				}
+			}
+		}
+
+		class DrawThread extends Thread {
+			private boolean running = false;
+			private SurfaceHolder surfaceHolderT;
+
+			public DrawThread(SurfaceHolder surfaceHolder) {
+				this.surfaceHolderT = surfaceHolder;
+			}
+
+			public void setRunning(boolean running) {
+				this.running = running;
+			}
+
+			@Override
+			public void run() {
+				Canvas canvas;
+				while (running) {
+					canvas = null;
+					try {
+						canvas = surfaceHolderT.lockCanvas(null);
+						if (canvas == null)
+							continue;
+						//canvas.drawColor(Color.GREEN);
+						canvas.drawText(""+cnt, 100, 100, paint);
+						++cnt;
+						Log.v("DrawView", "cnt="+cnt);
+					} finally {
+						if (canvas != null) {
+							surfaceHolderT.unlockCanvasAndPost(canvas);
+						}
+					}
+				}
+			}
+		}
+
 	}
 
 }
